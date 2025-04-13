@@ -1,2 +1,3 @@
 # Supercollider
- mini projects while learning SuperCollider
+Hi!
+Here are some mini projects while I was learning SuperCollider. :)
