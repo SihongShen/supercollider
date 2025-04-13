@@ -43,23 +43,23 @@ Routine({
 
 // 2. visual
 (
-// 初始化
+//create global variable
 ~vis = (
-    width: 600, height: 600,  // 增加窗口大小
+    width: 600, height: 600,  // window
     bufferSize: 512,
     data: Signal.newClear(512).fill(0.2),
     scopeBuf: Buffer.alloc(s, 512)
 );
 
-// 音频分析器
+// audio analysis
 SynthDef(\audioAnalyzer, { |bufnum|
     var in = In.ar(0, 2).mean;
-    var env = Amplitude.kr(in, 0.01, 0.1);  // 更快的响应时间
-    var sig = in * env * 8;  // 进一步增加信号强度
+    var env = Amplitude.kr(in, 0.01, 0.1);
+    var sig = in * env * 8;
     RecordBuf.ar(sig, bufnum, loop: 1);
 }).add;
 
-// 可视化窗口
+// visualize window
 AppClock.sched(0, {
     ~vis.win = Window("Visualizer", Rect(100,100,~vis.width,~vis.height)).front;
     ~vis.view = UserView(~vis.win, ~vis.win.bounds)
@@ -67,21 +67,21 @@ AppClock.sched(0, {
 
     ~vis.view.drawFunc = {
         var center = ~vis.view.bounds.center;
-        var radius = min(center.x, center.y) * 0.95;  // 增加图形范围
+        var radius = min(center.x, center.y) * 0.95;
         var baseHue = Main.elapsedTime.frac * 0.3;
 
-        12.do { |petal|  // 增加更多花瓣
+        12.do { |petal|
             var rotation = petal * (2pi/8);
             var hue = (baseHue + (petal/16)).wrap(0,1);
 
             Pen.strokeColor = Color.hsv(hue, hue*0.9, 1.0);
-            Pen.width = 2;  // 增加线条宽度
+            Pen.width = hue*2;
 
             Pen.moveTo(center.x @ center.y);
 
             ~vis.bufferSize.do { |i|
                 var val = ~vis.data[i].clip(-1,1).abs;
-                var mag = val * val * 8000 * radius;  // 大幅增加图形大小
+                var mag = val * val * 8000 * radius;
                 var angle = i * (2pi/~vis.bufferSize);
                 var x = mag * cos(angle);
                 var y = mag * sin(angle);
@@ -96,7 +96,7 @@ AppClock.sched(0, {
     };
 });
 
-// 数据采集
+// data update
 fork {
     s.sync;
     ~vis.scopeSynth = Synth(\audioAnalyzer, [\bufnum, ~vis.scopeBuf]);
@@ -106,7 +106,7 @@ fork {
             ~vis.scopeBuf.getn(0, ~vis.bufferSize, { |bufData|
                 ~vis.data = Signal.newFrom(bufData);
             });
-            0.02.wait;  // 进一步提高刷新率
+            0.02.wait;
             { ~vis.view.refresh }.defer;
         };
     }).play(AppClock);
